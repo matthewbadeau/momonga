@@ -515,7 +515,7 @@ class Momonga:
                  pwd: str,
                  dev: str,
                  baudrate: int = 115200,
-                 reset_dev: bool = True
+                 reset_dev: bool = True,
                  ) -> None:
         self.xmit_retries: int = 12
         self.recv_timeout: int | float = 12

@@ -260,7 +260,8 @@ class MomongaSkWrapper:
         self.exec_command(['SKSETPWD', '%X' % len(pwd), pwd])
 
     def skscan(self,
-               retry: int = 3) -> SkScanResponse:
+               retry: int = 3,
+               ) -> SkScanResponse:
         duration = 6
         for _ in range(retry):
             logger.debug('Trying to scan a PAN... Duration: %d' % duration)
@@ -304,7 +305,7 @@ class MomongaSkWrapper:
                  handle: int = 1,
                  port: int = 0x0E1A,
                  sec: int = 2,
-                 side: int = 0
+                 side: int = 0,
                  ) -> None:
         self.exec_command(['SKSENDTO', str(handle), ip6_addr, '%04X' % port,
                            str(sec), str(side) if not self.is_bp35a1 else None, '%04X' % len(data)],

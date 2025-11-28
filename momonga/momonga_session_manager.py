@@ -22,7 +22,7 @@ class MomongaSessionManager:
                  pwd: str,
                  dev: str,
                  baudrate: int = 115200,
-                 reset_dev: bool = True
+                 reset_dev: bool = True,
                 ) -> None:
         self.dev = dev
         self.baudrate = baudrate
