@@ -78,9 +78,6 @@ class MomongaSessionManager:
             # to set a password.
             self.skw.sksetpwd(self.pwd)
             logger.info('The Route-B ID and the password were registered.')
-
-            # Get SKINFO. This helps decide if BP35A1 or not
-            self.skw.skinfo()
             try:
                 logger.info('Scanning PAN channels...')
                 scan_res = self.skw.skscan()

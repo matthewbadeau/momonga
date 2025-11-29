@@ -20,6 +20,7 @@ from .momonga_response import (SkVerResponse,
                                SkInfoResponse,
                                SkScanResponse,
                                SkLl64Response)
+from .momonga_device_enum import DeviceType
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class MomongaSkWrapper:
         self.publisher_th_breaker = False
         self.publisher_th = None
         self.subscribers = {'cmd_exec_q': queue.Queue()}
-        self.is_bp35a1 = False
+        self.device_type: DeviceType = DeviceType.BP35C2
 
     def __enter__(self) -> Self:
         return self.open()
@@ -72,6 +73,9 @@ class MomongaSkWrapper:
         self.publisher_th_breaker = False  # set True when you want to stop the publisher.
         self.publisher_th = threading.Thread(target=self.received_packet_publisher, daemon=True)
         self.publisher_th.start()
+
+        # Detects device type
+        self.detect_device()
 
     def close(self) -> None:
         if self.publisher_th is not None:
@@ -234,10 +238,8 @@ class MomongaSkWrapper:
         self.exec_command(['SKRESET'])
 
     def skinfo(self) -> SkInfoResponse:
-        res = SkInfoResponse(self.exec_command(['SKINFO']))
-        if res.side > 1:
-            self.is_bp35a1 = True
-        return res
+        res = self.exec_command(['SKINFO'])
+        return SkInfoResponse(res)
 
     def sksreg(self,
                reg: str,
@@ -265,12 +267,20 @@ class MomongaSkWrapper:
         duration = 6
         for _ in range(retry):
             logger.debug('Trying to scan a PAN... Duration: %d' % duration)
-            res = self.exec_command(['SKSCAN', '2', 'FFFFFFFF', str(duration), '0' if not self.is_bp35a1 else None], 'EVENT 22')
+            cmd = []
+            match self.device_type:
+                case DeviceType.BP35A1:
+                    cmd = ['SKSCAN', '2', 'FFFFFFFF', str(duration)]
+                case DeviceType.BP35C2:
+                    cmd = ['SKSCAN', '2', 'FFFFFFFF', str(duration), '0']
+                case _:
+                    cmd = ['SKSCAN', '2', 'FFFFFFFF', str(duration), '0']
+            res = self.exec_command(cmd, 'EVENT 22')
             # estimated execution time: 0.0096s*(2^(DURATION=6)+1)*28 = 17.5s
             # estimated execution time: 0.0096s*(2^(DURATION=7)+1)*28 = 34.7s
             # estimated execution time: 0.0096s*(2^(DURATION=8)+1)*28 = 69.1s
             if 'EPANDESC' in res:
-                return SkScanResponse(res, is_bp35a1=self.is_bp35a1)
+                return SkScanResponse(res, device_type=self.device_type)
             duration += 1
         raise MomongaSkScanFailure('Could not find the specified PAN.')
 
@@ -307,6 +317,26 @@ class MomongaSkWrapper:
                  sec: int = 2,
                  side: int = 0,
                  ) -> None:
-        self.exec_command(['SKSENDTO', str(handle), ip6_addr, '%04X' % port,
-                           str(sec), str(side) if not self.is_bp35a1 else None, '%04X' % len(data)],
-                          payload=data)
+        match self.device_type:
+            case DeviceType.BP35A1:
+                self.exec_command(['SKSENDTO', str(handle), ip6_addr, '%04X' % port,
+                                   str(sec), '%04X' % len(data)],
+                                  payload=data)
+            case DeviceType.BP35C2:
+                self.exec_command(['SKSENDTO', str(handle), ip6_addr, '%04X' % port,
+                                   str(sec), str(side), '%04X' % len(data)],
+                                  payload=data)
+            case _:
+                self.exec_command(['SKSENDTO', str(handle), ip6_addr, '%04X' % port,
+                                   str(sec), str(side), '%04X' % len(data)],
+                                  payload=data)
+
+    def detect_device(self):
+        logger.debug('Trying to detect device...')
+        dev_info = self.skinfo()
+        if dev_info.side == 65534:
+            logger.debug('Device type is BP35A1.')
+            self.device_type = DeviceType.BP35A1
+        elif dev_info.side < 2:
+            logger.debug('Device type is BP35C2.')
+            self.device_type = DeviceType.BP35C2
