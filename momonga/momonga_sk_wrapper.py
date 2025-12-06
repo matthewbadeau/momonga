@@ -228,18 +228,18 @@ class MomongaSkWrapper:
 
     def skver(self) -> SkVerResponse:
         res = self.exec_command(['SKVER'])
-        return SkVerResponse(res)
+        return SkVerResponse(res, self.device_type)
 
     def skappver(self) -> SkAppVerResponse:
         res = self.exec_command(['SKAPPVER'])
-        return SkAppVerResponse(res)
+        return SkAppVerResponse(res, self.device_type)
 
     def skreset(self) -> None:
         self.exec_command(['SKRESET'])
 
     def skinfo(self) -> SkInfoResponse:
         res = self.exec_command(['SKINFO'])
-        return SkInfoResponse(res)
+        return SkInfoResponse(res, self.device_type)
 
     def sksreg(self,
                reg: str,
@@ -280,7 +280,7 @@ class MomongaSkWrapper:
             # estimated execution time: 0.0096s*(2^(DURATION=7)+1)*28 = 34.7s
             # estimated execution time: 0.0096s*(2^(DURATION=8)+1)*28 = 69.1s
             if 'EPANDESC' in res:
-                return SkScanResponse(res, device_type=self.device_type)
+                return SkScanResponse(res, self.device_type)
             duration += 1
         raise MomongaSkScanFailure('Could not find the specified PAN.')
 
@@ -288,7 +288,7 @@ class MomongaSkWrapper:
                mac_addr: bytes,
                ) -> SkLl64Response:
         res = self.exec_command(['SKLL64', mac_addr.hex().upper()], 'FE80:')
-        return SkLl64Response(res)
+        return SkLl64Response(res, self.device_type)
 
     def skjoin(self,
                ip6_addr: str,

@@ -1,11 +1,9 @@
-from typing import Optional
-
 from .momonga_exception import MomongaKeyError
 from .momonga_device_enum import DeviceType
 
 
 class MomongaSkResponseBase:
-    def __init__(self, res, device_type: Optional[DeviceType] = None):
+    def __init__(self, res, device_type: DeviceType):
         self.raw_response = res
         self.device_type = device_type
         self.decode()
