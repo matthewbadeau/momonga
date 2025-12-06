@@ -345,3 +345,4 @@ class MomongaSkWrapper:
         else:
             logger.warning('Device type is UNKNOWN. Assuming BP35C2.')
             self.device_type = DeviceType.BP35C2
+        logger.info('Detected device type is %s.', self.device_type)
