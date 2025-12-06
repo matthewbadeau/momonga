@@ -274,6 +274,7 @@ class MomongaSkWrapper:
                 case DeviceType.BP35C2:
                     cmd = ['SKSCAN', '2', 'FFFFFFFF', str(duration), '0']
                 case _:
+                    logger.warning('Unknown device type "%s" detected in skscan. Assuming BP35C2 behavior.', self.device_type)
                     cmd = ['SKSCAN', '2', 'FFFFFFFF', str(duration), '0']
             res = self.exec_command(cmd, 'EVENT 22')
             # estimated execution time: 0.0096s*(2^(DURATION=6)+1)*28 = 17.5s
@@ -327,6 +328,7 @@ class MomongaSkWrapper:
                                    str(sec), str(side), '%04X' % len(data)],
                                   payload=data)
             case _:
+                logger.warning('Unknown device type "%s" detected in sksendto. Assuming BP35C2 behavior.', self.device_type)
                 self.exec_command(['SKSENDTO', str(handle), ip6_addr, '%04X' % port,
                                    str(sec), str(side), '%04X' % len(data)],
                                   payload=data)
@@ -341,4 +343,5 @@ class MomongaSkWrapper:
             logger.debug('Device type is BP35C2.')
             self.device_type = DeviceType.BP35C2
         else:
-            logger.error('Device type is UNKNOWN.')
+            logger.warning('Device type is UNKNOWN. Assuming BP35C2.')
+            self.device_type = DeviceType.BP35C2

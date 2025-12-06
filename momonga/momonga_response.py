@@ -1,5 +1,9 @@
+import logging
+
 from .momonga_exception import MomongaKeyError
 from .momonga_device_enum import DeviceType
+
+logger = logging.getLogger(__name__)
 
 
 class MomongaSkResponseBase:
@@ -54,6 +58,7 @@ class SkScanResponse(MomongaSkResponseBase):
             case DeviceType.BP35C2:
                 self.side = int(self.extract('Side:').split(':')[-1], 16)
             case _:
+                logger.warning('Unknown device type "%s" detected in SkScanResponse. Assuming BP35C2 behavior.', self.device_type)
                 self.side = int(self.extract('Side:').split(':')[-1], 16)
         self.pair_id = bytes.fromhex(self.extract('PairID:').split(':')[-1])
 
@@ -76,6 +81,7 @@ class SkSendToResponse(MomongaSkResponseBase):
                 self.side = int(self.res_list[3], 16)
                 self.param = int(self.res_list[4], 16)
             case _:
+                logger.warning('Unknown device type "%s" detected in SkSendToResponse. Assuming BP35C2 behavior.', self.device_type)
                 self.side = int(self.res_list[3], 16)
                 self.param = int(self.res_list[4], 16)
 
@@ -104,6 +110,7 @@ class SkEventRxUdp(MomongaSkResponseBase):
                 self.data_len = int(self.res_list[9], 16)
                 self.data = bytes.fromhex(self.res_list[10])
             case _:
+                logger.warning('Unknown device type "%s" detected in SkEventRxUdp. Assuming BP35C2 behavior.', self.device_type)
                 self.lqi = int(self.res_list[6], 16)
                 self.rssi = 0.275 * self.lqi - 104.27
                 self.sec = int(self.res_list[7], 16)
